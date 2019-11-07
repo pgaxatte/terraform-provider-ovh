@@ -13,12 +13,12 @@ import (
 	"github.com/ovh/go-ovh/ovh"
 )
 
-func resourceSshKey() *schema.Resource {
+func resourceMeSshKey() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSshKeyCreate,
-		Read:   resourceSshKeyRead,
-		Update: resourceSshKeyUpdate,
-		Delete: resourceSshKeyDelete,
+		Create: resourceMeSshKeyCreate,
+		Read:   readeMeSshKey,
+		Update: resourceMeSshKeyUpdate,
+		Delete: resourceMeSshKeyDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
@@ -47,12 +47,34 @@ func resourceSshKey() *schema.Resource {
 	}
 }
 
-func resourceSshKeyCreate(d *schema.ResourceData, meta interface{}) error {
+// Common function with the datasource
+func readMeSshKey(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+
+	sshKey := &MeSshKeyResponse{}
+
+	keyName := d.Get("key_name").(string)
+	err := config.OVHClient.Get(
+		fmt.Sprintf("/me/sshKey/%s", keyName),
+		sshKey,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to find SSH key named %s:\n\t %q", keyName, err)
+	}
+
+	d.Set("key_name", s.KeyName)
+	d.Set("key", s.Key)
+	d.Set("default", s.Default)
+
+	return nil
+}
+
+func resourceMeSshKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	keyName := d.Get("key_name").(string)
 	key := d.Get("key").(string)
-	params := &SshKeyCreateOpts{
+	params := &MeSshKeyCreateOpts{
 		KeyName: keyName,
 		Key:     key,
 	}
@@ -64,35 +86,14 @@ func resourceSshKeyCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating SSH Key with params %s:\n\t %q", params, err)
 	}
 
-	return resourceSshKeyRead(d, meta)
+	return resourceMeSshKeyRead(d, meta)
 }
 
-func resourceSshKeyRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
-
-	resultKey := &SshKeyResponse{}
-
-	keyName := d.Get("key_name").(string)
-	err := config.OVHClient.Get(
-		fmt.Sprintf("/me/sshKey/%s", keyName),
-		resultKey,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to find SSH key named %s:\n\t %q", keyName, err)
-	}
-
-	d.Set("key_name", resultKey.KeyName)
-	d.Set("key", resultKey.Key)
-	d.Set("default", resultKey.Default)
-
-	return nil
-}
-
-func resourceSshKeyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceMeSshKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	keyName := d.Get("key_name").(string)
-	params := &SshKeyUpdateOpts{
+	params := &MeSshKeyUpdateOpts{
 		Default: d.Get("default").(string),
 	}
 	err := config.OVHClient.Put(
@@ -104,10 +105,10 @@ func resourceSshKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Updated SSH Key %s", keyName)
-	return resourceSshKeyRead(d, meta)
+	return resourceMeSshKeyRead(d, meta)
 }
 
-func resourceSshKeyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceMeSshKeyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	keyName := d.Get("key_name").(string)
