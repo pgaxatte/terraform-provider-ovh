@@ -8,7 +8,7 @@ import (
 
 func TestAccMeSshKeysDataSource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheckCredentials(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
