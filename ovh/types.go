@@ -166,7 +166,7 @@ type MeSshKeyResponse struct {
 }
 
 func (s *MeSshKeyResponse) String() string {
-	return fmt.Sprintf("SSH Key: %s, key:%s, default:%s",
+	return fmt.Sprintf("SSH Key: %s, key:%s, default:%t",
 		s.Key, s.KeyName, s.Default)
 }
 

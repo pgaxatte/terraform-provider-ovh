@@ -1,9 +1,6 @@
 package ovh
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform/helper/schema"
 )
 

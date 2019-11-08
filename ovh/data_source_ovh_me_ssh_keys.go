@@ -28,7 +28,7 @@ func dataSourceMeSshKeysRead(d *schema.ResourceData, meta interface{}) error {
 	err := config.OVHClient.Get("/me/sshKey", &names)
 
 	if err != nil {
-		return fmt.Errorf("Error calling %s:\n\t %q", endpoint, err)
+		return fmt.Errorf("Error calling /me/sshKey:\n\t %q", err)
 	}
 
 	d.Set("names", names)

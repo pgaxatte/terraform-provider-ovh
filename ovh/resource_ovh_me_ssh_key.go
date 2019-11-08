@@ -3,20 +3,14 @@ package ovh
 import (
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
-	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-
-	"github.com/ovh/go-ovh/ovh"
 )
 
 func resourceMeSshKey() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMeSshKeyCreate,
-		Read:   readeMeSshKey,
+		Read:   readMeSshKey,
 		Update: resourceMeSshKeyUpdate,
 		Delete: resourceMeSshKeyDelete,
 
@@ -59,12 +53,12 @@ func readMeSshKey(d *schema.ResourceData, meta interface{}) error {
 		sshKey,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to find SSH key named %s:\n\t %q", keyName, err)
+		return fmt.Errorf("Unable to find SSH key named %s:\n\t %q", keyName, err)
 	}
 
-	d.Set("key_name", s.KeyName)
-	d.Set("key", s.Key)
-	d.Set("default", s.Default)
+	d.Set("key_name", sshKey.KeyName)
+	d.Set("key", sshKey.Key)
+	d.Set("default", sshKey.Default)
 
 	return nil
 }
@@ -86,7 +80,7 @@ func resourceMeSshKeyCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating SSH Key with params %s:\n\t %q", params, err)
 	}
 
-	return resourceMeSshKeyRead(d, meta)
+	return readMeSshKey(d, meta)
 }
 
 func resourceMeSshKeyUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -94,18 +88,19 @@ func resourceMeSshKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	keyName := d.Get("key_name").(string)
 	params := &MeSshKeyUpdateOpts{
-		Default: d.Get("default").(string),
+		Default: d.Get("default").(bool),
 	}
 	err := config.OVHClient.Put(
 		fmt.Sprintf("/me/sshKey/%s", keyName),
 		nil,
+		params,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to update SSH key named %s:\n\t %q", keyName, err)
+		return fmt.Errorf("Unable to update SSH key named %s:\n\t %q", keyName, err)
 	}
 
 	log.Printf("[DEBUG] Updated SSH Key %s", keyName)
-	return resourceMeSshKeyRead(d, meta)
+	return readMeSshKey(d, meta)
 }
 
 func resourceMeSshKeyDelete(d *schema.ResourceData, meta interface{}) error {
@@ -117,7 +112,7 @@ func resourceMeSshKeyDelete(d *schema.ResourceData, meta interface{}) error {
 		nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to delete SSH key named %s:\n\t %q", keyName, err)
+		return fmt.Errorf("Unable to delete SSH key named %s:\n\t %q", keyName, err)
 	}
 
 	log.Printf("[DEBUG] Deleted SSH Key %s", keyName)
